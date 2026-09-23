@@ -70,11 +70,18 @@ body.is-shared-view #step-result,
 body.is-shared-view #step-browse{display:none!important}
 body.is-shared-view #step-share{display:block!important}
 body.is-shared-view #step-share.hidden{display:block!important}
+body.is-shared-view #hero-title{margin-top:12px!important;line-height:1.16!important;letter-spacing:-1.45px!important}
+.shared-hero-line{display:block;font-size:clamp(28px,4.1vw,46px);font-weight:900;line-height:1.14}
+.shared-hero-name{color:#fff;white-space:normal}
+.shared-hero-question{display:block;margin-top:12px;font-size:clamp(21px,3vw,32px);font-weight:800;line-height:1.25;letter-spacing:-.9px;color:rgba(255,255,255,.94)}
 @media (max-width:640px){
   .taste-card-dialog{width:94vw;max-width:94vw;padding:12px;border-radius:18px}
   #zoom-content{max-height:calc(92vh - 74px)}
   #zoom-content img,#zoom-content .dialog-cardimg{max-height:calc(92vh - 92px)!important}
   .share-friend-title{font-size:23px;margin-top:6px}
+  body.is-shared-view #hero-title{line-height:1.13!important;letter-spacing:-1.15px!important}
+  .shared-hero-line{font-size:30px;line-height:1.16}
+  .shared-hero-question{font-size:21px;line-height:1.28;margin-top:10px}
   #step-share .panel{padding-left:14px;padding-right:14px}
 }
 </style>
@@ -87,7 +94,7 @@ body.is-shared-view #step-share.hidden{display:block!important}
  <section class="work-layout" id="step-select"><main class="panel"><div class="section-head"><div><span class="eyebrow">STEP 01 · YOUR FAVORITES</span><h2>재미있게 본 작품을 선택해 주세요</h2><p class="sub">좋아하는 작품을 5편 이상 골라야 취향 결과를 볼 수 있어요. 최대 10편까지 선택할 수 있고, 정말 취향이 아닌 작품은 ‘별로예요’로 표시해도 됩니다.</p></div><div class="count" id="count">0 / 10</div></div><div class="progress"><div class="bar" id="progress-bar"></div></div><div class="progress-caption"><span id="progress-caption">마음에 드는 작품을 골라주세요.</span><strong>최소 5편 · 최대 10편</strong></div><div class="selected-strip"><div class="strip-top"><span>✓ 내가 선택한 작품</span><button type="button" class="link-button hidden" id="expand-picks">전체 보기</button></div><div class="pills" id="picked-pills"><span class="sub">선택한 작품이 아직 없습니다.</span></div><div id="disliked-summary" class="disliked-summary hidden"></div></div><div class="controls"><label class="search">⌕ <input id="search" type="search" autocomplete="off" placeholder="작품명 · 태그 · 플랫폼 · 작가 검색" aria-label="작품명, 태그, 플랫폼, 작가 검색"></label></div><div class="media-tabs" id="media-tabs" aria-label="작품 분야 선택"></div><div class="catalog-label"><span id="list-label">먼저 보기 좋은 작품</span><span id="catalog-total"></span></div><div class="grid" id="catalog"></div><button class="btn outline refresh-wide" type="button" id="refresh">↻ 작품 새로고침</button><div class="action-row result-only"><button class="btn primary result-wide" id="go-options" type="button" disabled>좋아하는 작품 5편을 선택해 주세요</button></div></main><aside class="panel sidebar"><span class="eyebrow">MY PICKS</span><div class="mini-title">내가 고른 이야기</div><p class="sub">좋아하는 작품은 목록을 새로고침해도 유지됩니다.</p><div class="side-list" id="sidebar-list"><div class="empty">아직 선택한 작품이 없어요.</div></div><div class="rule"><div class="mini-title">선택 방법</div><div class="hint-row"><span class="hint-dot"></span>좋아하는 작품은 카드를 눌러 선택하세요.</div><div class="hint-row"><span class="hint-dot" style="background:#e36b77"></span>정말 취향이 아닌 작품은 ‘별로예요’로 표시할 수 있어요.</div><div class="hint-row"><span class="hint-dot"></span>5편 이상 선택하면 취향 결과를 볼 수 있어요.</div></div></aside></section>
  <section class="work-layout hidden" id="step-options"><main class="panel"><span class="eyebrow">STEP 02 · TASTE SETTING</span><h2 style="font-size:26px;letter-spacing:-1.2px;margin:8px 0">주로 보는 콘텐츠를 골라주세요</h2><p class="compact-sub">여러 개 선택할 수 있어요.</p><div class="form-block"><div class="form-options media-pref-grid" id="preferred-media-opts"></div></div><div class="form-block"><h3>피하고 싶은 내용 <span style="font-size:11px;color:#9893a8;font-weight:700">선택</span></h3><div class="form-options" id="exclude-opts"></div></div><div class="step-nav"><button type="button" class="btn outline" id="back-select">← 작품 다시 고르기</button><button type="button" class="btn primary" id="finish" disabled>내 취향 결과 보기 →</button></div></main><aside class="panel sidebar"><span class="eyebrow">MY PICKS</span><div class="mini-title">선택한 작품</div><div id="option-picks" class="side-list"></div></aside></section>
  <section class="work-layout hidden" id="step-result"><main class="panel"><span class="eyebrow">STEP 03 · RESULT</span><div class="result-banner"><div class="animal-portrait" id="animal" role="button" tabindex="0" aria-label="취향 카드 크게 보기">🐈</div><div><h2 id="animal-title"></h2><p id="animal-desc"></p><p id="confidence"></p></div></div><div class="result-actions"><button type="button" class="btn primary" id="share-btn">↗ 취향 카드 공유</button><button type="button" class="btn outline" id="edit-picks">← 작품 다시 선택</button></div><div class="rule"><div class="section-head"><div><span class="eyebrow">PICKS FOR YOU</span><h2 style="font-size:21px;margin:7px 0">다음에 볼 작품을 찾아볼까요?</h2></div></div><div class="mode-tabs" id="mode-tabs"><button type="button" data-mode="match" class="active">✦ 찰떡픽</button><button type="button" data-mode="similar">◎ 유사픽</button><button type="button" data-mode="discover">◇ 발견픽</button></div><div id="mode-description" class="mode-description-compact"></div><div id="pivot-control" style="display:flex;gap:8px;align-items:center;margin-top:13px"><label for="pivot" class="inline-label">기준 작품</label><select id="pivot" class="small-select"></select></div><div id="recommend-list"></div><div class="result-cta"><a href="https://chalpick.kr/" target="_blank" rel="noopener noreferrer" class="btn primary">찰픽에서 더 찾아보기 ↗</a></div><div id="recommend-footnote" style="display:none"></div></div><div id="feedback-history" style="display:none"></div><div id="result-picks" style="display:none"></div></main></section>
- <section class="work-layout hidden" id="step-share"><main class="panel share-friend-panel" style="text-align:center"><span class="eyebrow">CHALPICK · TASTE CARD</span><div class="share-card" id="share-card"></div><div class="share-actions"><button type="button" class="btn primary" id="try-own">나도 취향테스트 해보기 →</button></div></main></section>
+ <section class="work-layout hidden" id="step-share"><main class="panel share-friend-panel" style="text-align:center"><span class="eyebrow">CHALPICK · TASTE CARD</span><div class="share-card" id="share-card"></div><div class="share-actions"><button type="button" class="btn primary" id="try-own" onclick="window.__chalpickStartOwnTaste(event)">나도 취향테스트 해보기 →</button></div></main></section>
  <section class="work-layout hidden" id="step-browse"><main class="panel"><span class="eyebrow">ALL TYPES</span><h2>다른 취향들도 살펴보세요</h2><p class="sub">16가지 유형의 이름과 동물 이미지를 미리 확인할 수 있어요. 정식 카드 이미지가 제공되지 않아 이 데모는 임시 그림을 사용합니다.</p><div id="animal-grid" class="browse-grid"></div><div class="action-row"><button type="button" class="btn primary" id="close-browse">← 돌아가기</button></div></main></section>
  <p class="footer">콘텐츠 취향 발견은, 찰픽 · chalpick.kr</p>
 </div>
@@ -100,16 +107,52 @@ body.is-shared-view #step-share.hidden{display:block!important}
 
 <script>
 (function(){
-  function hasSharedLink(){
+  function sharedValue(){
     const hashParams = new URLSearchParams(location.hash.slice(1));
     const queryParams = new URLSearchParams(location.search);
-    return !!(hashParams.get('share') || queryParams.get('share'));
+    return hashParams.get('share') || queryParams.get('share') || '';
+  }
+
+  function hasSharedLink(){
+    return !!sharedValue();
+  }
+
+  function sharedTypeLabel(){
+    const value = sharedValue();
+    const list = window.CHALPICK_TYPES || [];
+    if(!value || !list.length) return '콘텐츠 취향';
+    for(let i=0;i<list.length;i++){
+      const label = list[i] && list[i].label ? list[i].label : '';
+      const tail = label.split(' ').filter(Boolean).slice(-1)[0] || 'type';
+      const slug = tail + '-' + i.toString(36);
+      if(slug === value) return label;
+    }
+    return '콘텐츠 취향';
+  }
+
+  function sharedHeroHTML(){
+    const label = sharedTypeLabel();
+    return '<span class="shared-hero-line">친구의 취향은 <span class="shared-hero-name">' + label + '</span>입니다!</span>' +
+           '<span class="shared-hero-question">과연 당신의 콘텐츠 취향은?</span>';
+  }
+
+  function clearForcedSharedStyles(){
+    const stages = document.getElementById('stages');
+    if(stages) stages.style.removeProperty('display');
+    ['step-select','step-options','step-result','step-browse','step-share'].forEach(function(id){
+      const el = document.getElementById(id);
+      if(el) el.style.removeProperty('display');
+    });
   }
 
   function syncSharedView(){
     const isShared = hasSharedLink();
     document.body.classList.toggle('is-shared-view', isShared);
-    if(!isShared) return;
+
+    if(!isShared){
+      clearForcedSharedStyles();
+      return;
+    }
 
     const stages = document.getElementById('stages');
     if(stages) stages.style.setProperty('display','none','important');
@@ -131,10 +174,27 @@ body.is-shared-view #step-share.hidden{display:block!important}
     const heroTitle = document.getElementById('hero-title');
     const heroKicker = document.getElementById('hero-kicker');
     const heroDesc = document.getElementById('hero-desc');
-    if(heroKicker) heroKicker.textContent = 'SHARED TASTE CARD';
-    if(heroTitle) heroTitle.innerHTML = '친구의 취향은 이렇습니다.';
+    if(heroKicker && heroKicker.textContent !== 'SHARED TASTE CARD') heroKicker.textContent = 'SHARED TASTE CARD';
+    if(heroTitle){
+      const wanted = sharedHeroHTML();
+      if(heroTitle.innerHTML !== wanted) heroTitle.innerHTML = wanted;
+    }
     if(heroDesc) heroDesc.textContent = '';
   }
+
+  // Leave the shared-card URL completely and reload the normal test.
+  // stopImmediatePropagation prevents the older app.js click handler from fighting this transition.
+  window.__chalpickStartOwnTaste = function(event){
+    if(event){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    document.body.classList.remove('is-shared-view');
+    clearForcedSharedStyles();
+    const cleanUrl = location.origin + location.pathname;
+    location.replace(cleanUrl);
+    return false;
+  };
 
   async function saveTasteCard(){
     const img = document.querySelector('#zoom-content img') || document.querySelector('#share-card img') || document.querySelector('#animal img');
@@ -147,13 +207,14 @@ body.is-shared-view #step-share.hidden{display:block!important}
       const blob = await res.blob();
       const type = (blob.type || '').toLowerCase();
       const ext = type.includes('png') ? 'png' : type.includes('jpeg') ? 'jpg' : 'webp';
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
+      a.href = url;
       a.download = 'chalpick-taste-card.' + ext;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
     }catch(err){
       const a = document.createElement('a');
       a.href = img.src;
@@ -168,15 +229,25 @@ body.is-shared-view #step-share.hidden{display:block!important}
     syncSharedView();
     const saveBtn = document.getElementById('save-card');
     if(saveBtn) saveBtn.addEventListener('click', saveTasteCard);
+
+    // app.js can rewrite the hero while rendering the shared route.
+    // Keep the shared message locked to the requested copy.
+    const heroTitle = document.getElementById('hero-title');
+    if(heroTitle){
+      const observer = new MutationObserver(function(){
+        if(!hasSharedLink()) return;
+        const wanted = sharedHeroHTML();
+        if(heroTitle.innerHTML !== wanted) heroTitle.innerHTML = wanted;
+      });
+      observer.observe(heroTitle, {childList:true, subtree:true, characterData:true});
+    }
+
     setTimeout(syncSharedView, 0);
+    setTimeout(syncSharedView, 80);
   });
 
-  window.addEventListener('hashchange', function(){
-    setTimeout(syncSharedView, 0);
-  });
-  window.addEventListener('popstate', function(){
-    setTimeout(syncSharedView, 0);
-  });
+  window.addEventListener('hashchange', function(){ setTimeout(syncSharedView, 0); });
+  window.addEventListener('popstate', function(){ setTimeout(syncSharedView, 0); });
 })();
 </script>
 
