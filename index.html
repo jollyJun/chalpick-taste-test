@@ -55,7 +55,8 @@
   margin:0 auto!important;
   border-radius:18px;
 }
-#animal{cursor:zoom-in}
+#animal{cursor:zoom-in;scroll-margin-top:88px}
+#step-result{scroll-margin-top:72px}
 .share-friend-panel{max-width:720px;margin:0 auto}
 .share-friend-title{font-size:28px;line-height:1.25;letter-spacing:-1.1px;margin:8px 0 18px}
 #step-share .share-card{margin:0 auto 18px}
@@ -202,31 +203,126 @@ body.is-shared-view #hero-title{margin-top:12px!important;line-height:1.16!impor
       alert('저장할 취향카드를 찾지 못했습니다.');
       return;
     }
+
     try{
-      const res = await fetch(img.src);
-      const blob = await res.blob();
-      const type = (blob.type || '').toLowerCase();
-      const ext = type.includes('png') ? 'png' : type.includes('jpeg') ? 'jpg' : 'webp';
+      if(!img.complete || !img.naturalWidth){
+        if(img.decode) await img.decode();
+        else await new Promise(function(resolve,reject){ img.onload=resolve; img.onerror=reject; });
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d', {alpha:false});
+      if(!ctx) throw new Error('canvas unsupported');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+
+      const blob = await new Promise(function(resolve){
+        canvas.toBlob(resolve, 'image/jpeg', 0.94);
+      });
+      if(!blob) throw new Error('jpeg conversion failed');
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'chalpick-taste-card.' + ext;
+      a.download = 'chalpick-taste-card.jpg';
+      a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
     }catch(err){
-      const a = document.createElement('a');
-      a.href = img.src;
-      a.download = 'chalpick-taste-card.webp';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      alert('이미지를 JPG로 변환하지 못했습니다. 다른 브라우저에서 다시 시도해 주세요.');
     }
+  }
+
+  function visibleStage(){
+    for(const name of ['options','result','select']){
+      const el = document.getElementById('step-' + name);
+      if(el && !el.classList.contains('hidden') && getComputedStyle(el).display !== 'none') return name;
+    }
+    return 'select';
+  }
+
+  function scrollResultCardIntoView(){
+    const target = document.getElementById('animal') || document.getElementById('step-result');
+    if(!target) return;
+    const go = function(){
+      const top = target.getBoundingClientRect().top + window.scrollY - 76;
+      window.scrollTo({top:Math.max(0,top), behavior:'smooth'});
+    };
+    requestAnimationFrame(function(){ requestAnimationFrame(go); });
+    setTimeout(go, 120);
+    setTimeout(go, 360);
+  }
+
+  function setupTasteHistory(){
+    if(hasSharedLink()) return;
+
+    const initialStage = visibleStage();
+    const baseState = Object.assign({}, history.state || {}, {chalpickTaste:true, chalpickStage:initialStage});
+    history.replaceState(baseState, '', location.href);
+
+    const goOptions = document.getElementById('go-options');
+    if(goOptions){
+      goOptions.addEventListener('click', function(){
+        if(goOptions.disabled) return;
+        setTimeout(function(){
+          if(visibleStage() !== 'options') return;
+          const current = history.state || {};
+          if(current.chalpickStage !== 'options'){
+            history.pushState(Object.assign({}, current, {chalpickTaste:true, chalpickStage:'options'}), '', location.href);
+          }
+        }, 0);
+      });
+    }
+
+    const backSelect = document.getElementById('back-select');
+    if(backSelect){
+      backSelect.addEventListener('click', function(){
+        setTimeout(function(){
+          const current = history.state || {};
+          if(current.chalpickStage === 'options') history.back();
+          else history.replaceState(Object.assign({}, current, {chalpickTaste:true, chalpickStage:'select'}), '', location.href);
+        }, 0);
+      });
+    }
+
+    const finish = document.getElementById('finish');
+    if(finish){
+      finish.addEventListener('click', function(){
+        if(finish.disabled) return;
+        setTimeout(function(){
+          if(visibleStage() !== 'result') return;
+          const current = history.state || {};
+          history.replaceState(Object.assign({}, current, {chalpickTaste:true, chalpickStage:'result'}), '', location.href);
+          scrollResultCardIntoView();
+        }, 0);
+      });
+    }
+
+    window.addEventListener('popstate', function(event){
+      if(hasSharedLink()) return;
+      const targetStage = event.state && event.state.chalpickStage;
+      const now = visibleStage();
+
+      if(targetStage === 'select' && now === 'options'){
+        const btn = document.getElementById('back-select');
+        if(btn) btn.click();
+        return;
+      }
+      if(targetStage === 'select' && now === 'result'){
+        const btn = document.getElementById('edit-picks');
+        if(btn) btn.click();
+      }
+    });
   }
 
   document.addEventListener('DOMContentLoaded', function(){
     syncSharedView();
+    setupTasteHistory();
     const saveBtn = document.getElementById('save-card');
     if(saveBtn) saveBtn.addEventListener('click', saveTasteCard);
 
