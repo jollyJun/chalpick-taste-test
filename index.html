@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f8f7ff">
+<title>찰픽 | 나의 취향 발견</title>
+
+
+
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <meta property="og:title" content="찰픽 | 나의 콘텐츠 취향 발견">
+  <meta property="og:description" content="좋아하는 작품을 고르고 나의 콘텐츠 취향을 확인해보세요.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://chalpick-taste-test.vercel.app/">
+  <meta property="og:image" content="https://chalpick-taste-test.vercel.app/assets/taste-cards/type-01.webp">
+  <meta property="og:image:alt" content="찰픽 콘텐츠 취향테스트 결과 카드">
+  <meta name="twitter:card" content="summary_large_image">
+
+<style>
+/* v11 HTML-only overrides */
+.taste-card-dialog{
+  border:0;
+  border-radius:24px;
+  padding:18px;
+  width:min(92vw,560px);
+  max-width:560px;
+  max-height:92vh;
+  box-shadow:0 30px 90px #1b123866;
+  overflow:hidden;
+  background:#fff;
+}
+.taste-card-dialog::backdrop{background:rgba(13,9,28,.58);backdrop-filter:blur(2px)}
+#zoom-content{
+  margin-top:14px;
+  width:100%;
+  max-height:calc(92vh - 88px);
+  overflow:auto;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  overscroll-behavior:contain;
+}
+#zoom-content .share-card,
+#zoom-content img,
+#zoom-content .dialog-cardimg{
+  display:block;
+  width:auto!important;
+  max-width:100%!important;
+  height:auto!important;
+  max-height:calc(92vh - 105px)!important;
+  object-fit:contain!important;
+  margin:0 auto!important;
+  border-radius:18px;
+}
+#animal{cursor:zoom-in}
+.share-friend-panel{max-width:720px;margin:0 auto}
+.share-friend-title{font-size:28px;line-height:1.25;letter-spacing:-1.1px;margin:8px 0 18px}
+#step-share .share-card{margin:0 auto 18px}
+#step-share .share-actions{display:flex;justify-content:center;margin-top:18px}
+#step-share .share-actions .btn{min-width:min(100%,320px)}
+/* shared view never needs the step indicator */
+body.is-shared-view #stages{display:none!important}
+body.is-shared-view #hero-desc{display:none!important}
+@media (max-width:640px){
+  .taste-card-dialog{width:94vw;max-width:94vw;padding:12px;border-radius:18px}
+  #zoom-content{max-height:calc(92vh - 74px)}
+  #zoom-content img,#zoom-content .dialog-cardimg{max-height:calc(92vh - 92px)!important}
+  .share-friend-title{font-size:23px;margin-top:6px}
+  #step-share .panel{padding-left:14px;padding-right:14px}
+}
+</style>
+
+</head>
+<body>
+<header class="top"><div class="top-inner"><div class="logo"><span class="brand-icon">✦</span><span>찰픽<span class="brand-sub">CHALPICK · TASTE DISCOVERY</span></span></div><div class="head-actions"><span class="top-chip">취향테스트</span><button type="button" class="ghost" id="reset">↻ 처음부터</button></div></div></header>
+<div class="container">
+ <div class="hero"><div class="hero-inner"><div><div class="kicker" id="hero-kicker">FIND YOUR NEXT FAVORITE</div><h1 id="hero-title">좋아하는 작품을 고르면,<br>당신만의 취향이 보여요.</h1><p id="hero-desc">길게 질문하지 않을게요. 재미있게 본 작품만 골라주세요. 끝까지 보지 않았더라도 좋아했던 작품이면 괜찮아요.</p></div><div class="stage" id="stages"><b class="active">01 작품 선택</b><b>02 취향 설정</b><b>03 결과</b></div></div></div>
+ <section class="work-layout" id="step-select"><main class="panel"><div class="section-head"><div><span class="eyebrow">STEP 01 · YOUR FAVORITES</span><h2>재미있게 본 작품을 선택해 주세요</h2><p class="sub">좋아하는 작품을 5편 이상 골라야 취향 결과를 볼 수 있어요. 최대 10편까지 선택할 수 있고, 정말 취향이 아닌 작품은 ‘별로예요’로 표시해도 됩니다.</p></div><div class="count" id="count">0 / 10</div></div><div class="progress"><div class="bar" id="progress-bar"></div></div><div class="progress-caption"><span id="progress-caption">마음에 드는 작품을 골라주세요.</span><strong>최소 5편 · 최대 10편</strong></div><div class="selected-strip"><div class="strip-top"><span>✓ 내가 선택한 작품</span><button type="button" class="link-button hidden" id="expand-picks">전체 보기</button></div><div class="pills" id="picked-pills"><span class="sub">선택한 작품이 아직 없습니다.</span></div><div id="disliked-summary" class="disliked-summary hidden"></div></div><div class="controls"><label class="search">⌕ <input id="search" type="search" autocomplete="off" placeholder="작품명 · 태그 · 플랫폼 · 작가 검색" aria-label="작품명, 태그, 플랫폼, 작가 검색"></label></div><div class="media-tabs" id="media-tabs" aria-label="작품 분야 선택"></div><div class="catalog-label"><span id="list-label">먼저 보기 좋은 작품</span><span id="catalog-total"></span></div><div class="grid" id="catalog"></div><button class="btn outline refresh-wide" type="button" id="refresh">↻ 작품 새로고침</button><div class="action-row result-only"><button class="btn primary result-wide" id="go-options" type="button" disabled>좋아하는 작품 5편을 선택해 주세요</button></div></main><aside class="panel sidebar"><span class="eyebrow">MY PICKS</span><div class="mini-title">내가 고른 이야기</div><p class="sub">좋아하는 작품은 목록을 새로고침해도 유지됩니다.</p><div class="side-list" id="sidebar-list"><div class="empty">아직 선택한 작품이 없어요.</div></div><div class="rule"><div class="mini-title">선택 방법</div><div class="hint-row"><span class="hint-dot"></span>좋아하는 작품은 카드를 눌러 선택하세요.</div><div class="hint-row"><span class="hint-dot" style="background:#e36b77"></span>정말 취향이 아닌 작품은 ‘별로예요’로 표시할 수 있어요.</div><div class="hint-row"><span class="hint-dot"></span>5편 이상 선택하면 취향 결과를 볼 수 있어요.</div></div></aside></section>
+ <section class="work-layout hidden" id="step-options"><main class="panel"><span class="eyebrow">STEP 02 · TASTE SETTING</span><h2 style="font-size:26px;letter-spacing:-1.2px;margin:8px 0">주로 보는 콘텐츠를 골라주세요</h2><p class="compact-sub">여러 개 선택할 수 있어요.</p><div class="form-block"><div class="form-options media-pref-grid" id="preferred-media-opts"></div></div><div class="form-block"><h3>피하고 싶은 내용 <span style="font-size:11px;color:#9893a8;font-weight:700">선택</span></h3><div class="form-options" id="exclude-opts"></div></div><div class="step-nav"><button type="button" class="btn outline" id="back-select">← 작품 다시 고르기</button><button type="button" class="btn primary" id="finish" disabled>내 취향 결과 보기 →</button></div></main><aside class="panel sidebar"><span class="eyebrow">MY PICKS</span><div class="mini-title">선택한 작품</div><div id="option-picks" class="side-list"></div></aside></section>
+ <section class="work-layout hidden" id="step-result"><main class="panel"><span class="eyebrow">STEP 03 · RESULT</span><div class="result-banner"><div class="animal-portrait" id="animal" role="button" tabindex="0" aria-label="취향 카드 크게 보기">🐈</div><div><h2 id="animal-title"></h2><p id="animal-desc"></p><p id="confidence"></p></div></div><div class="result-actions"><button type="button" class="btn primary" id="share-btn">↗ 취향 카드 공유</button><button type="button" class="btn outline" id="edit-picks">← 작품 다시 선택</button></div><div class="rule"><div class="section-head"><div><span class="eyebrow">PICKS FOR YOU</span><h2 style="font-size:21px;margin:7px 0">다음에 볼 작품을 찾아볼까요?</h2></div></div><div class="mode-tabs" id="mode-tabs"><button type="button" data-mode="match" class="active">✦ 찰떡픽</button><button type="button" data-mode="similar">◎ 유사픽</button><button type="button" data-mode="discover">◇ 발견픽</button></div><div id="mode-description" class="mode-description-compact"></div><div id="pivot-control" style="display:flex;gap:8px;align-items:center;margin-top:13px"><label for="pivot" class="inline-label">기준 작품</label><select id="pivot" class="small-select"></select></div><div id="recommend-list"></div><div class="result-cta"><a href="https://chalpick.kr/" target="_blank" rel="noopener noreferrer" class="btn primary">찰픽에서 더 찾아보기 ↗</a></div><div id="recommend-footnote" style="display:none"></div></div><div id="feedback-history" style="display:none"></div><div id="result-picks" style="display:none"></div></main></section>
+ <section class="work-layout hidden" id="step-share"><main class="panel share-friend-panel" style="text-align:center"><span class="eyebrow">CHALPICK · TASTE CARD</span><h2 class="share-friend-title">친구의 취향은 이렇습니다.</h2><div class="share-card" id="share-card"></div><div class="share-actions"><button type="button" class="btn primary" id="try-own">나도 취향테스트 해보기 →</button></div></main></section>
+ <section class="work-layout hidden" id="step-browse"><main class="panel"><span class="eyebrow">ALL TYPES</span><h2>다른 취향들도 살펴보세요</h2><p class="sub">16가지 유형의 이름과 동물 이미지를 미리 확인할 수 있어요. 정식 카드 이미지가 제공되지 않아 이 데모는 임시 그림을 사용합니다.</p><div id="animal-grid" class="browse-grid"></div><div class="action-row"><button type="button" class="btn primary" id="close-browse">← 돌아가기</button></div></main></section>
+ <p class="footer">콘텐츠 취향 발견은, 찰픽 · chalpick.kr</p>
+</div>
+<dialog id="card-dialog" class="taste-card-dialog"><div style="display:flex;align-items:center;justify-content:space-between;gap:9px"><strong>나의 취향 카드</strong><button type="button" class="ghost" id="close-card">닫기 ×</button></div><div id="zoom-content" class="share-card"></div></dialog><div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="data/contents.js" defer></script>
+<script src="data/types.js" defer></script>
+<script src="js/app.js" defer></script>
+
+
+<script>
+window.addEventListener('DOMContentLoaded', function(){
+  function syncSharedView(){
+    const params = new URLSearchParams(location.hash.slice(1));
+    const isShared = !!params.get('share');
+    document.body.classList.toggle('is-shared-view', isShared);
+    if(isShared){
+      const stages = document.getElementById('stages');
+      if(stages) stages.style.display = 'none';
+      const heroTitle = document.getElementById('hero-title');
+      const heroKicker = document.getElementById('hero-kicker');
+      const heroDesc = document.getElementById('hero-desc');
+      if(heroKicker) heroKicker.textContent = 'SHARED TASTE CARD';
+      if(heroTitle) heroTitle.innerHTML = '친구의 취향은 이렇습니다.';
+      if(heroDesc) heroDesc.textContent = '';
+    }
+  }
+  syncSharedView();
+  window.addEventListener('hashchange', syncSharedView);
+});
+</script>
+
+</body></html>

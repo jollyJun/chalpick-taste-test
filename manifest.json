@@ -1,0 +1,94 @@
+[
+  {
+    "path": "README_배포방법.txt",
+    "bytes": 1618
+  },
+  {
+    "path": "assets/taste-cards/type-01.webp",
+    "bytes": 315378
+  },
+  {
+    "path": "assets/taste-cards/type-02.webp",
+    "bytes": 309896
+  },
+  {
+    "path": "assets/taste-cards/type-03.webp",
+    "bytes": 285578
+  },
+  {
+    "path": "assets/taste-cards/type-04.webp",
+    "bytes": 270284
+  },
+  {
+    "path": "assets/taste-cards/type-05.webp",
+    "bytes": 293630
+  },
+  {
+    "path": "assets/taste-cards/type-06.webp",
+    "bytes": 262608
+  },
+  {
+    "path": "assets/taste-cards/type-07.webp",
+    "bytes": 277612
+  },
+  {
+    "path": "assets/taste-cards/type-08.webp",
+    "bytes": 261328
+  },
+  {
+    "path": "assets/taste-cards/type-09.webp",
+    "bytes": 285600
+  },
+  {
+    "path": "assets/taste-cards/type-10.webp",
+    "bytes": 312176
+  },
+  {
+    "path": "assets/taste-cards/type-11.webp",
+    "bytes": 310370
+  },
+  {
+    "path": "assets/taste-cards/type-12.webp",
+    "bytes": 292740
+  },
+  {
+    "path": "assets/taste-cards/type-13.webp",
+    "bytes": 307878
+  },
+  {
+    "path": "assets/taste-cards/type-14.webp",
+    "bytes": 308750
+  },
+  {
+    "path": "assets/taste-cards/type-15.webp",
+    "bytes": 254440
+  },
+  {
+    "path": "assets/taste-cards/type-16.webp",
+    "bytes": 329416
+  },
+  {
+    "path": "css/style.css",
+    "bytes": 22565
+  },
+  {
+    "path": "data/contents.js",
+    "bytes": 337030
+  },
+  {
+    "path": "data/types.js",
+    "bytes": 1213
+  },
+  {
+    "path": "index.html",
+    "bytes": 8517
+  },
+  {
+    "path": "js/app.js",
+    "bytes": 51574
+  },
+  {
+    "path": "vercel.json",
+    "bytes": 24
+  }
+]
