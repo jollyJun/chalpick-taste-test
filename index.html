@@ -197,45 +197,31 @@ body.is-shared-view #hero-title{margin-top:12px!important;line-height:1.16!impor
     return false;
   };
 
-  async function saveTasteCard(){
+  function saveTasteCard(){
     const img = document.querySelector('#zoom-content img') || document.querySelector('#share-card img') || document.querySelector('#animal img');
     if(!img || !img.src){
       alert('저장할 취향카드를 찾지 못했습니다.');
       return;
     }
 
-    try{
-      if(!img.complete || !img.naturalWidth){
-        if(img.decode) await img.decode();
-        else await new Promise(function(resolve,reject){ img.onload=resolve; img.onerror=reject; });
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext('2d', {alpha:false});
-      if(!ctx) throw new Error('canvas unsupported');
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.drawImage(img,0,0,canvas.width,canvas.height);
-
-      const blob = await new Promise(function(resolve){
-        canvas.toBlob(resolve, 'image/jpeg', 0.94);
-      });
-      if(!blob) throw new Error('jpeg conversion failed');
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'chalpick-taste-card.jpg';
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
-    }catch(err){
-      alert('이미지를 JPG로 변환하지 못했습니다. 다른 브라우저에서 다시 시도해 주세요.');
+    // KakaoTalk/Samsung in-app browsers can reject blob: URLs even when the blob itself is JPEG.
+    // Use a real same-origin .jpg asset instead of a dynamically generated blob URL.
+    const match = img.src.match(/type-(\d{2})\.(?:webp|jpg|jpeg|png)(?:[?#].*)?$/i);
+    if(!match){
+      alert('저장용 JPG 파일을 찾지 못했습니다.');
+      return;
     }
+
+    const fileNo = match[1];
+    const jpgUrl = new URL('assets/taste-cards/type-' + fileNo + '.jpg', location.href).href;
+    const a = document.createElement('a');
+    a.href = jpgUrl;
+    a.download = 'chalpick-taste-card-' + fileNo + '.jpg';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 
   function visibleStage(){
