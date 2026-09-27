@@ -75,7 +75,7 @@ let currentStage = '';
 let REC = {match:[], similar:[], discover:[]};
 
 function fresh(){
-  return {selected:[], disliked:[], display:[], shown:{}, last:[], filter:'전체', query:'', all:false, expanded:false,
+  return {selected:[], disliked:[], display:[], shown:{}, last:[], mediaFilters:[], query:'', all:false, expanded:false,
     exclude:[], priority:[], preferredMedia:[], feedback:{}, stage:'select', type:null, mode:'match', pivot:null,
     openFeedback:null, stopPending:null, seed:Math.random()};
 }
@@ -86,7 +86,8 @@ try {
     state = {...fresh(), ...saved};
     state.selected = (saved.selected || []).filter(id => BY_ID[id]).slice(0,10);
     state.disliked = (saved.disliked || []).filter(id => BY_ID[id] && !state.selected.includes(id));
-    state.filter = MEDIA.includes(saved.filter) ? saved.filter : '전체';
+    const legacyFilter = MEDIA.includes(saved.filter) && saved.filter !== '전체' ? [saved.filter] : [];
+    state.mediaFilters = Array.isArray(saved.mediaFilters) ? saved.mediaFilters.filter(x => MEDIA.slice(1).includes(x)) : legacyFilter;
     state.exclude = (saved.exclude || []).filter(x => EXCLUDES.some(v => v[0] === x));
     state.priority = (saved.priority || []).filter(x => PRIORITIES.some(v => v[0] === x));
     state.preferredMedia = (saved.preferredMedia || []).filter(x => MEDIA.slice(1).includes(x));
@@ -146,13 +147,16 @@ function feedbackEntries(){ return Object.entries(state.feedback).map(([id,v]) =
 function positiveExtra(){ return feedbackEntries().filter(([,v]) => ['want','liked'].includes(v.status)).map(([w]) => w); }
 function negativeExtra(){ const map=new Map(); (state.disliked||[]).map(id=>BY_ID[id]).filter(Boolean).forEach(w=>map.set(w.id,w)); feedbackEntries().filter(([,v]) => ['meh','no'].includes(v.status) || (v.status === 'stopped' && v.reason === 'bored')).map(([w]) => w).forEach(w=>map.set(w.id,w)); return [...map.values()]; }
 function profileWorks(){ const map = new Map(); [...chosen(), ...positiveExtra()].forEach(w => map.set(w.id, w)); return [...map.values()]; }
-function pool(){ return WORKS.filter(w => state.filter === '전체' || w.media === state.filter); }
+function mediaFilterActive(w){ return !state.mediaFilters.length || state.mediaFilters.includes(w.media); }
+function pool(){ return WORKS.filter(mediaFilterActive); }
 function exposure(w){ return state.shown[w.id] || 0; }
 function genre(w){ return (w.tags && w.tags[0]) || w.media; }
 function diversity(w, existing){
   let score = (exposure(w) === 0 ? 6 : 0) - 2 * exposure(w);
   score += 2.7 / (1 + existing.filter(x => x.media === w.media).length);
   score += 2.0 / (1 + existing.filter(x => genre(x) === genre(w)).length);
+  const sg = semanticGroup(w);
+  if(sg) score += 1.6 / (1 + existing.filter(x => semanticGroup(x) === sg).length);
   score += 1.4 / (1 + existing.filter(x => (x.year && w.year && Math.abs(x.year - w.year) < 2)).length);
   score += pseudoRandom(w) * 0.7;
   return score;
@@ -342,41 +346,111 @@ function starterPool(){
   return out;
 }
 const STARTER_POOL = starterPool();
-function firstBatch(){
-  let available = STARTER_POOL.filter(w => !state.selected.includes(w.id) && (state.filter === '전체' || w.media === state.filter));
-  available = available.filter(w => exposure(w) === 0);
-  if(!available.length) available = STARTER_POOL.filter(w => !state.selected.includes(w.id) && (state.filter === '전체' || w.media === state.filter));
-  let out = [];
-  if(state.filter === '전체'){
-    for(const medium of MEDIA.slice(1)){
-      const group = available.filter(w => w.media === medium && !out.some(x => ipKey(x) === ipKey(w)));
-      out.push(...selectDiverse(group, 3, out));
-    }
-  } else {
-    out = selectDiverse(available, 12, out);
+function activeMediaList(){
+  return state.mediaFilters.length ? [...state.mediaFilters] : MEDIA.slice(1);
+}
+function starterAvailable(){
+  return STARTER_POOL.filter(w => !state.selected.includes(w.id) && !(state.disliked||[]).includes(w.id) && mediaFilterActive(w));
+}
+function diverseZeroSignalBatch(){
+  let available = starterAvailable();
+  let freshAvailable = available.filter(w => exposure(w) === 0);
+  if(freshAvailable.length >= Math.min(12, available.length)) available = freshAvailable;
+  const active = activeMediaList();
+  const out = [];
+  const used = new Set();
+  const targetPerMedia = active.length ? Math.ceil(12 / active.length) : 12;
+
+  // With no taste signal, deliberately spread the first 12 across selected media and different story types.
+  for(const medium of active){
+    const group = available.filter(w => w.media === medium && !used.has(ipKey(w)));
+    const picked = selectDiverse(group, targetPerMedia, out).slice(0, Math.max(0, 12-out.length));
+    picked.forEach(w => { out.push(w); used.add(ipKey(w)); });
+    if(out.length >= 12) break;
   }
-  if(out.length < 12) out.push(...selectDiverse(available.filter(w => !out.some(x => ipKey(x) === ipKey(w))), 12-out.length, out));
+  if(out.length < 12){
+    const rest = available.filter(w => !used.has(ipKey(w)));
+    const picked = selectDiverse(rest, 12-out.length, out);
+    picked.forEach(w => { out.push(w); used.add(ipKey(w)); });
+  }
   return out.slice(0,12);
+}
+function refreshSimilarityScore(w, positives){
+  if(!positives.length) return 0;
+  const affinities = positives.map(p => sourceAffinity(p,w)).sort((a,b)=>b-a);
+  const best = affinities[0] || 0;
+  const top = affinities.slice(0, Math.min(3, affinities.length));
+  const topAvg = top.length ? top.reduce((a,b)=>a+b,0)/top.length : best;
+  const profile = scoreProfile(positives);
+  const tags = topProfileTags(positives,8);
+  const profileFit = similarity(w,profile);
+  const tagFit = profileTagAffinity(w,tags);
+  return Math.max(0, Math.min(1.2, best*0.42 + topAvg*0.28 + profileFit*0.16 + tagFit*0.14 + priorityBoost(w) - negativePenalty(w)));
+}
+function noveltyScore(w, positives){
+  if(!positives.length) return 0;
+  const bridges = positives.map(p => ({p,aff:sourceAffinity(p,w)})).sort((a,b)=>b.aff-a.aff);
+  const best = bridges[0];
+  const bridge = best ? best.aff : 0;
+  const chosenMedia = new Set(positives.map(x=>x.media));
+  const chosenGroups = new Set(positives.map(semanticGroup).filter(Boolean));
+  const group = semanticGroup(w);
+  const mediaNovel = chosenMedia.has(w.media) ? 0 : 1;
+  const groupNovel = group && !chosenGroups.has(group) ? 1 : 0;
+  const primaryMax = Math.max(...positives.map(p=>primaryTagSimilarity(p,w)),0);
+  const tagNovel = 1 - Math.min(1, primaryMax);
+  const broadBridge = Math.max(...positives.map(p=>weightedTagSimilarity(p,w)),0);
+  // New-field candidates still need a bridge; pure randomness should not dominate.
+  return bridge*0.42 + broadBridge*0.13 + mediaNovel*0.15 + groupNovel*0.16 + tagNovel*0.14 - negativePenalty(w);
+}
+function pickRankedRows(rows, count, used, existing, diversityWeight=0.012){
+  const picked = [];
+  const candidates = rows.filter(r => !used.has(ipKey(r.w)));
+  while(picked.length < count && candidates.length){
+    candidates.sort((a,b) => {
+      const ad = diversity(a.w,[...existing,...picked.map(x=>x.w)]) * diversityWeight;
+      const bd = diversity(b.w,[...existing,...picked.map(x=>x.w)]) * diversityWeight;
+      return (b.score + bd) - (a.score + ad);
+    });
+    const next = candidates.shift();
+    if(used.has(ipKey(next.w))) continue;
+    picked.push(next); used.add(ipKey(next.w));
+  }
+  return picked;
 }
 function pickForRefresh(base){
   const positives = profileWorks();
-  if(!positives.length) return selectDiverse(base,12);
-  const profile = scoreProfile(positives);
-  const tags = topProfileTags(positives,8);
-  const ranked = [...base].map(w => ({w,score:matchAffinity(w,positives,profile,tags)})).sort((a,b)=>b.score-a.score);
-  const picked = [];
-  const perMedia = {};
+  if(!positives.length) return diverseZeroSignalBatch();
+
+  const simRows = base.map(w => ({w,score:refreshSimilarityScore(w,positives)})).sort((a,b)=>b.score-a.score);
+  const n = simRows.length;
+  const highEnd = Math.max(4, Math.ceil(n*0.28));
+  const midStart = Math.min(n, Math.max(4, Math.floor(n*0.28)));
+  const midEnd = Math.min(n, Math.max(midStart+4, Math.ceil(n*0.70)));
+  const highRows = simRows.slice(0,highEnd);
+  const midRows = simRows.slice(midStart,midEnd);
+  const discoveryRows = base.map(w => ({w,score:noveltyScore(w,positives)}))
+    .sort((a,b)=>b.score-a.score);
+
   const used = new Set();
-  for(const row of ranked){
-    const w = row.w;
-    if(picked.length >= 12) break;
-    const key = ipKey(w); if(used.has(key)) continue;
-    perMedia[w.media] = perMedia[w.media] || 0;
-    if(perMedia[w.media] >= 4) continue;
-    picked.push(w); used.add(key); perMedia[w.media]++;
+  const outRows = [];
+  // 4 close candidates
+  outRows.push(...pickRankedRows(highRows,4,used,[],0.006));
+  if(outRows.length < 4) outRows.push(...pickRankedRows(simRows,4-outRows.length,used,outRows.map(x=>x.w),0.006));
+  // 4 medium candidates: still connected, but not merely the nearest neighbours.
+  const beforeMid = outRows.length;
+  outRows.push(...pickRankedRows(midRows,4,used,outRows.map(x=>x.w),0.014));
+  if(outRows.length < beforeMid+4){
+    const fallbackMid = simRows.slice(Math.min(4,simRows.length));
+    outRows.push(...pickRankedRows(fallbackMid,beforeMid+4-outRows.length,used,outRows.map(x=>x.w),0.014));
   }
-  if(picked.length < 12) picked.push(...selectDiverse(base.filter(w => !used.has(ipKey(w))),12-picked.length,picked));
-  return picked.slice(0,12);
+  // 4 discovery candidates: retain a bridge while changing medium/story mechanism/primary material.
+  const beforeDiscovery = outRows.length;
+  outRows.push(...pickRankedRows(discoveryRows,4,used,outRows.map(x=>x.w),0.020));
+  if(outRows.length < beforeDiscovery+4){
+    outRows.push(...pickRankedRows(simRows,beforeDiscovery+4-outRows.length,used,outRows.map(x=>x.w),0.018));
+  }
+  return outRows.slice(0,12).map(r=>r.w);
 }
 function markShown(list){
   list.forEach(w => { state.shown[w.id] = (state.shown[w.id] || 0) + 1; });
@@ -386,21 +460,25 @@ function makeBatch(initial=false){
   const hasSignal = profileWorks().length > 0;
   let base;
   if(!hasSignal){
-    base = STARTER_POOL.filter(w => !state.selected.includes(w.id) && !(state.disliked||[]).includes(w.id) && (state.filter === '전체' || w.media === state.filter));
+    base = starterAvailable();
   } else {
     base = pool().filter(w => !state.selected.includes(w.id) && !(state.disliked||[]).includes(w.id));
   }
   const unseen = base.filter(w => !exposure(w));
-  let candidates = unseen.length ? unseen : base.filter(w => !state.last.includes(w.id));
-  if(!candidates.length) candidates = base;
-  const output = !hasSignal ? firstBatch() : pickForRefresh(candidates);
+  let candidates = unseen.length >= 12 ? unseen : base.filter(w => !state.last.includes(w.id));
+  if(candidates.length < 12) candidates = base;
+  const output = hasSignal ? pickForRefresh(candidates) : diverseZeroSignalBatch();
   state.display = output.slice(0,12).map(w => w.id);
   markShown(output.slice(0,12));
   state.all = false; state.query = '';
   save();
 }
 function mediaTabs(){
-  $('media-tabs').innerHTML = MEDIA.map(m => `<button class="media-tab ${state.filter === m ? 'active' : ''}" data-medium="${m}" type="button">${m}</button>`).join('');
+  const active = new Set(state.mediaFilters || []);
+  $('media-tabs').innerHTML = MEDIA.map(m => {
+    const on = m === '전체' ? active.size === 0 : active.has(m);
+    return `<button class="media-tab ${on ? 'active' : ''}" data-medium="${m}" type="button" aria-pressed="${on}">${m}</button>`;
+  }).join('');
 }
 function searchTokens(raw){
   const q=normalize(raw);
@@ -435,11 +513,11 @@ function searchScore(w, raw){
 }
 function resultListing(){
   if(state.query){
-    return WORKS.map(w=>({w,score:searchScore(w,state.query)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score || Number(state.selected.includes(b.w.id))-Number(state.selected.includes(a.w.id)) || ((b.w.confidence==='확정')-(a.w.confidence==='확정')) || (b.w.year||0)-(a.w.year||0)).slice(0,240).map(x=>x.w);
+    return pool().map(w=>({w,score:searchScore(w,state.query)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score || Number(state.selected.includes(b.w.id))-Number(state.selected.includes(a.w.id)) || ((b.w.confidence==='확정')-(a.w.confidence==='확정')) || (b.w.year||0)-(a.w.year||0)).slice(0,240).map(x=>x.w);
   }
   const all = pool();
   if(state.all) return all;
-  return state.display.map(id => BY_ID[id]).filter(Boolean).filter(w => state.filter === '전체' || w.media === state.filter);
+  return state.display.map(id => BY_ID[id]).filter(Boolean).filter(mediaFilterActive);
 }
 function cardMarkup(w){
   const active = state.selected.includes(w.id);
@@ -487,7 +565,7 @@ function renderSelection(preserve=false){
   showStage('select', !preserve);
   renderPickedSummary();
   mediaTabs();
-  $('catalog-total').textContent = `전체 데이터 ${WORKS.length.toLocaleString('ko-KR')}편 · 첫 목록은 대표 후보 중심`;
+  $('catalog-total').textContent = '';
   $('search').value = state.query;
   const list = resultListing();
   $('list-label').innerHTML = state.query ? `<strong>검색 결과 ${list.length}편</strong>` : state.all ? `<strong>전체 작품</strong>` : `<strong>${profileWorks().length ? '취향에 맞춰 다시 골랐어요' : '먼저 보기 좋은 작품'}</strong>`;
@@ -746,7 +824,19 @@ $('expand-picks').addEventListener('click', () => { state.expanded = !state.expa
 $('search').addEventListener('compositionstart', () => composing = true);
 $('search').addEventListener('compositionend', e => { composing = false; state.query = e.target.value; renderCatalogOnly(); });
 $('search').addEventListener('input', e => { if(composing) return; state.query = e.target.value; renderCatalogOnly(); });
-$('media-tabs').addEventListener('click', e => { const b = e.target.closest('[data-medium]'); if(!b) return; state.filter = b.dataset.medium; state.query = ''; state.all = false; makeBatch(true); renderSelection(); });
+$('media-tabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-medium]'); if(!b) return;
+  const medium = b.dataset.medium;
+  if(medium === '전체'){
+    state.mediaFilters = [];
+  } else {
+    const set = new Set(state.mediaFilters || []);
+    if(set.has(medium)) set.delete(medium); else set.add(medium);
+    state.mediaFilters = [...set];
+  }
+  state.query = ''; state.all = false; state.display = []; state.last = [];
+  makeBatch(true); renderSelection();
+});
 $('refresh').addEventListener('click', () => { makeBatch(); renderSelection(true); requestAnimationFrame(() => { const target=$('catalog'); if(target) target.scrollIntoView({behavior:'smooth',block:'start'}); }); });
 $('go-options').addEventListener('click', () => { if(state.selected.length < 5){ toast('좋아하는 작품을 5편 이상 선택해 주세요.'); return; } state.stage = 'options'; renderOptions(); });
 $('back-select').addEventListener('click', () => { state.stage = 'select'; renderSelection(); });
