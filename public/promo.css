@@ -1,0 +1,48 @@
+.advertisement.promo-original{isolation:isolate;position:relative;overflow:hidden;line-height:1.4;border:1px solid #dce9fa;border-radius:18px;background:#f0f7ff;color:#0d1d42;cursor:default}
+/* The same artwork supplies a soft full-canvas backdrop; all four symbols remain intact in front. */
+.advertisement.promo-original::before{content:"";position:absolute;inset:-24px;background:url('/assets/promo-four-media-v11.webp') right center/cover no-repeat;filter:blur(22px);opacity:.22;z-index:0;pointer-events:none}
+.advertisement.promo-original .promo-art{position:absolute;inset:0 0 0 auto;width:auto;max-width:none;height:100%;object-fit:contain;object-position:right center;z-index:1;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 25%);mask-image:linear-gradient(90deg,transparent 0%,#000 25%)}
+.advertisement.promo-original::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#f1f7ff 0%,#f1f7fff0 25%,#f1f7ff00 65%);z-index:2;pointer-events:none}
+.promo-copy{display:flex;flex-direction:column;align-items:flex-start;position:relative;z-index:3;gap:16px;padding:30px 4.8%;text-align:left}
+.advertisement.promo-original .promo-brand{width:118px;height:auto;object-fit:contain;margin-left:-11px}
+.promo-headline{display:block;font-size:clamp(28px,4.2vw,57px);font-weight:850;line-height:1.17;letter-spacing:-.065em;word-break:keep-all}
+.promo-headline em{color:#075dea;font-style:normal}
+.promo-media{font-size:clamp(11px,1.8vw,19px);font-weight:650;letter-spacing:.025em;color:#455b7b}
+.promo-description{font-size:13px;line-height:1.75;color:#586f90;word-break:keep-all;max-width:37ch}
+.promo-cta{display:inline-flex;align-items:center;gap:18px;background:#075bf0;color:#fff;border-radius:30px;padding:10px 23px;font-size:clamp(12px,1.55vw,19px);font-weight:700;box-shadow:0 7px 16px #075bf029}
+.advertisement.ad-wide.promo-original{aspect-ratio:3.35/1;display:flex;align-items:center;min-height:275px}
+.advertisement.ad-square.promo-original{aspect-ratio:auto;min-height:410px;display:flex;align-items:flex-start;align-content:flex-start}
+.ad-square.promo-original::before{background-position:right bottom;opacity:.16}
+.ad-square.promo-original .promo-art{inset:auto 0 0 auto;width:100%;max-width:none;height:auto;object-position:right bottom;-webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 25%);mask-image:linear-gradient(180deg,transparent 0%,#000 25%)}
+.ad-square.promo-original::after{background:linear-gradient(180deg,#f1f7ff 0%,#f1f7fff0 31%,#f1f7ff00 70%)}
+.ad-square .promo-copy{padding:24px 21px;gap:12px}
+.promo-kicker{font-size:10px;letter-spacing:.2em;color:#1466df;font-weight:750}
+.ad-square .promo-headline{font-size:23px;line-height:1.36;letter-spacing:-.06em}
+.ad-square .promo-description{font-size:12px;max-width:23ch}
+.ad-square .promo-cta{font-size:11px;padding:9px 15px;gap:9px}
+@media(max-width:850px){
+  .advertisement.ad-wide.promo-original{min-height:245px;aspect-ratio:2.9/1}
+  .promo-copy{padding:27px 4.5%;gap:13px}
+  .promo-headline{font-size:36px}
+  .promo-description{font-size:12px}
+  .advertisement.ad-square.promo-original{min-height:410px}
+  .ad-square .promo-headline{font-size:26px}
+}
+@media(max-width:600px){
+  .advertisement.ad-wide.promo-original{min-height:370px;aspect-ratio:auto;align-items:flex-start;border-radius:15px}
+  .ad-wide.promo-original::before{background-position:right bottom;opacity:.2}
+  .advertisement.ad-wide.promo-original .promo-art{inset:auto 0 0 auto;width:100%;max-width:none;height:auto;object-position:right bottom;opacity:1;-webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 25%);mask-image:linear-gradient(180deg,transparent 0%,#000 25%)}
+  .ad-wide.promo-original::after{background:linear-gradient(180deg,#f1f7ff 0%,#f1f7fff0 25%,#f1f7ff00 65%)}
+  .promo-copy{gap:10px;padding:22px 6%}
+  .advertisement.promo-original .promo-brand{width:96px;margin-left:-9px}
+  .promo-headline{font-size:30px;line-height:1.2}
+  .promo-media{font-size:11px;letter-spacing:0}
+  .promo-description{font-size:11px;line-height:1.6}
+  .promo-cta{font-size:11px;padding:8px 16px;gap:10px}
+  .advertisement.ad-square.promo-original{min-height:360px;border-radius:13px}
+  .ad-square .promo-copy{padding:18px 14px;gap:10px}
+  .ad-square .promo-headline{font-size:20px}
+  .ad-square .promo-description{font-size:10px}
+  .ad-square .promo-cta{font-size:10px;padding:8px 10px;gap:6px}
+}
+@media(prefers-reduced-motion:reduce){.promo-original *{transition:none}}

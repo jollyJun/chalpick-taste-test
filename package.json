@@ -1,0 +1,16 @@
+{
+  "name": "chalpick-main-renewal",
+  "version": "1.9.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/build.mjs && node scripts/server.mjs",
+    "start": "node scripts/build.mjs && node scripts/server.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs",
+    "test:taste": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}
